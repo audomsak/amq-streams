@@ -1,0 +1,17 @@
+[Unit]
+Description=Red Hat AMQ Streams (Kafka service)
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+User=kafka
+Group=kafka
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/bin/java/:/usr/local/jdk/jre/bin"
+Environment="KAFKA_OPTS=-Djava.security.auth.login.config=/opt/redhat-amq-streams/config/server-jaas.properties"
+ExecStart=/opt/redhat-amq-streams/bin/kafka-server-start.sh /opt/redhat-amq-streams/config/server.properties
+ExecStop=/opt/redhat-amq-streams/bin/kafka-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target

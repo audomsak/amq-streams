@@ -1,0 +1,17 @@
+[Unit]
+Description=Red Hat AMQ Streams (Zookeeper service)
+Documentation=http://zookeeper.apache.org
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+User=kafka
+Group=kafka
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/bin/java/:/usr/local/jdk/jre/bin"
+Environment="KAFKA_OPTS=-Djava.security.auth.login.config=/opt/redhat-amq-streams/config/zookeeper-jaas.properties"
+ExecStart=/opt/redhat-amq-streams/bin/zookeeper-server-start.sh /opt/redhat-amq-streams/config/zookeeper.properties
+ExecStop=/opt/redhat-amq-streams/bin/zookeeper-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target
