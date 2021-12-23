@@ -482,7 +482,7 @@ JMX works at the level of the JVM (Java Virtual Machine). To obtain management i
    ```sh
    export KAFKA_OPTS=$KAFKA_OPTS' -javaagent:/opt/redhat-amq-streams/libs/jmx_prometheus_javaagent-0.15.0.redhat-00001.jar=7075:/opt/redhat-amq-streams/config/zookeeper.yml'
 
-     exec $base_dir/kafka-run-class.sh $EXTRA_ARGS org.apache.zookeeper.server.quorum.QuorumPeerMain "$@"
+  exec $base_dir/kafka-run-class.sh $EXTRA_ARGS org.apache.zookeeper.server.quorum.QuorumPeerMain "$@"
    ```
 
    Or you can update `KAFKA_OPTS` in [zookeeper.service](zookeeper.service) to include the JMS agent and configuration like this.
@@ -507,13 +507,9 @@ JMX works at the level of the JVM (Java Virtual Machine). To obtain management i
 
 #### Kafka Exporter
 
-Kafka Exporter is an open source project to enhance monitoring of Apache Kafka brokers and clients.
+Kafka Exporter is an open source project to enhance monitoring of Apache Kafka brokers and clients. Kafka Exporter is provided with AMQ Streams for deployment with a Kafka cluster to extract additional metrics data from Kafka brokers related to offsets, consumer groups, consumer lag, and topics.
 
-Kafka Exporter is provided with AMQ Streams for deployment with a Kafka cluster to extract additional metrics data from Kafka brokers related to offsets, consumer groups, consumer lag, and topics.
-
-The metrics data is used, for example, to help identify slow consumers.
-
-Lag data is exposed as Prometheus metrics, which can then be presented in Grafana for analysis.
+The metrics data is used, for example, to help identify slow consumers. Lag data is exposed as Prometheus metrics, which can then be presented in Grafana for analysis.
 
 If you are already using Prometheus and Grafana for monitoring of built-in Kafka metrics, you can configure Prometheus to also scrape the Kafka Exporter Prometheus endpoint using following steps.
 
