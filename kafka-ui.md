@@ -33,14 +33,14 @@ However, you need to update the parameters and/or environment variables with the
 
 Once you've run the command, visit [http://localhost:8080](http://localhost:8080) if you run on a local host and didn't change host port mapping (`-p` parammeter) in the command. Otherwise, change the URL to the right hostname/domain and port number.
 
-Here is a command to run UI for Apache Kafka as container.
+Here is a command to run UI for Apache Kafka as a container.
 
-- `-p` - Host port mapping. You can change or leave it as it.
-- `-v` - Bind mount path to a truststore.jks file.
+- `-p` - Host port mapping. You can change or leave it as is.
+- `-v` - Bind mount path to the truststore.jks file.
 - `SPRING_SECURITY_USER_NAME` - Default username for login to web console.
 - `SPRING_SECURITY_USER_PASSWORD` - Default password for login to web console.
 - `KAFKA_CLUSTERS_0_ZOOKEEPER` - Zookeeper host and port.
-- `KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS` - A list of Kafka broker and port.
+- `KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS` - A list of Kafka brokers and ports.
 
 Feel free to update the rest of environment variable values are based on cluster configurations.
 

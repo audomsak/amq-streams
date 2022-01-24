@@ -28,7 +28,7 @@ CA_ALIAS="kafka-ca"
 # https://bugs.openjdk.java.net/browse/JDK-8186143
 
 # Update the path of keytool execution file
-#KEYTOOL=/home/redhat/Downloads/jdk-15.0.2/bin/keytool
+#KEYTOOL=/path/to/jdk-15.0.2/bin/keytool
 #Default keytool on system
 KEYTOOL=`which keytool`
 
@@ -101,7 +101,13 @@ gen_keystore() {
     TRUSTSTORE="$WORKING_DIR/$HOSTNAME.$TRUSTSTORE_FILENAME"
     CSR_FILE="$WORKING_DIR/$HOSTNAME.$CERT_SIGN_REQUEST_FILE"
     SIGNED_CERT_FILE="$WORKING_DIR/$HOSTNAME.$CERT_SIGNED_FILE"
-    FQDN="$HOSTNAME.$DOMAIN_NAME"
+
+    if [ -z "$DOMAIN_NAME" ]; then
+      FQDN=$HOSTNAME
+    else
+      FQDN="$HOSTNAME.$DOMAIN_NAME"
+    fi
+
     KEY_ALIAS=$FQDN
 
     echo
@@ -249,7 +255,6 @@ gen_keystore_with_wildcard_cert() {
     rm -f $CSR_FILE $SIGNED_CERT_FILE
 }
 
-
 gen_single_host_keystore() {
   if [[ -z "$HOST_IP_LIST" ]]; then
     echo "HOST_IP_LIST variable is not defined. Please make sure you have set the variable before running this script."
@@ -266,10 +271,20 @@ gen_single_host_keystore() {
   done
 }
 
+gen_keystore_for_new_host() {
+    if [ ! -f $WORKING_DIR/serial.txt ]; then
+      echo 01 > $WORKING_DIR/serial.txt
+    fi
+    if [ ! -f $WORKING_DIR/index.txt ]; then
+      touch $WORKING_DIR/index.txt
+    fi
+    gen_keystore $1 $2
+}
+
 cleanup() {
     echo
     echo "Clean up temporary files."
-    rm -f $WORKING_DIR/*.pem $WORKING_DIR/serial* $WORKING_DIR/index*
+    rm -f $WORKING_DIR/*.pem
 }
 
 if [ $1 = "wildcard" ]; then
@@ -279,6 +294,9 @@ if [ $1 = "wildcard" ]; then
   cleanup
 elif [ $1 = "regular" ]; then
   gen_single_host_keystore
+  cleanup
+elif [ $1 = "newhost" ]; then
+  gen_keystore_for_new_host $2 $3
   cleanup
 else
   echo "Please specify a valid parameter either 'wildcard' or 'regular'"

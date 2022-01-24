@@ -1,0 +1,126 @@
+groups:
+- name: Cluster_Alert
+  rules:
+    - alert: InstanceDown
+      expr: up == 0
+      for: 1m
+      annotations:
+        summary: 'Instance {{ $labels.instance }} down'
+        description: '{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute.'
+      labels:
+        severity: 'critical'
+        cluster: "Payment Hub"
+
+    - alert: HostHighCPULoad
+      expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+      for: 0m
+      labels:
+        severity: warning
+        cluster: "Payment Hub"
+      annotations:
+        summary: Host high CPU load (instance {{ $labels.instance }})
+        description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: HostOutOfMemory
+      expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+      for: 2m
+      labels:
+        severity: warning
+        cluster: "Payment Hub"
+      annotations:
+        summary: Host out of memory (instance {{ $labels.instance }})
+        description: "Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Please add ignored mountpoints in node_exporter parameters like
+    # "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|run)($|/)".
+    # Same rule using "node_filesystem_free_bytes" will fire when disk fills for non-root users.
+    - alert: HostOutOfDiskSpace
+      expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
+      for: 2m
+      labels:
+        severity: warning
+        cluster: "Payment Hub"
+      annotations:
+        summary: Host out of disk space (instance {{ $labels.instance }})
+        description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+
+    - alert: HostOutOfInodes
+      expr: node_filesystem_files_free{mountpoint ="/rootfs"} / node_filesystem_files{mountpoint="/rootfs"} * 100 < 10 and ON (instance, device, mountpoint) node_filesystem_readonly{mountpoint="/rootfs"} == 0
+      for: 2m
+      labels:
+        severity: warning
+        cluster: "Payment Hub"
+      annotations:
+        summary: Host out of inodes (instance {{ $labels.instance }})
+        description: "Disk is almost running out of available inodes (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: Zookeeper_Alert
+  rules:
+    - alert: OfflineZookeeper
+      expr: (count(up{job="zookeeper"}) - count(zookeeper_status_quorumsize{job="zookeeper"})) > 0
+      for: 1m
+      labels:
+        severity: critical
+        cluster: "Payment Hub"
+      annotations:
+        summary: 'Zookeeper: {{ $value }} node(s) offline'
+        description:
+          '{{ $value }} out of
+          {{ with query "count(up{job=`zookeeper`})" }}
+            {{ . | first | value }}
+          {{ end }}
+          nodes are running. Following nodes are down:
+          {{range query "up{job=`zookeeper`} == 0" }}
+            {{ .Labels.instance }}
+          {{ end }}'
+
+- name: Kafka_Alerts
+  rules:
+    - alert: OfflineBroker
+      expr: (count(up{job="kafka-broker"}) - count(kafka_server_replicamanager_leadercount{job="kafka-broker"})) > 0
+      for: 1m
+      labels:
+        severity: critical
+        cluster: "Payment Hub"
+      annotations:
+        summary: 'Kafka: {{ $value }} broker(s) offline'
+        description:
+          '{{ $value }} out of
+           {{ with query "count(up{job=`kafka-broker`})" }}
+             {{ . | first | value }}
+           {{ end }}
+           brokers are running. Following brokers are down:
+           {{range query "up{job=`kafka-broker`} == 0" }}
+             {{ .Labels.instance }}
+           {{ end }}'
+
+    - alert: OfflinePartitonCount
+      expr: sum(kafka_controller_kafkacontroller_offlinepartitionscount{job="kafka-broker"}) > 0
+      for: 1m
+      labels:
+        severity: critical
+        cluster: "Payment Hub"
+      annotations:
+        summary: 'Kafka: {{ $value }} partitons offline'
+        description: 'After successful leader election, if the leader for partition dies, then the partition moves to the OfflinePartition state. Offline partitions are not available for reading and writing. Restart the brokers, if needed, and check the logs for errors.'
+
+    - alert: UnderReplicatedPartitionCount
+      expr: sum(kafka_server_replicamanager_underreplicatedpartitions{job="kafka-broker"}) > 0
+      for: 1m
+      labels:
+        severity: critical
+        cluster: "Payment Hub"
+      annotations:
+        summary: 'Kafka: {{ $value }} under replicated partitons'
+        description: 'Under-replicated partitions means that one or more replicas are not available. This is usually because a broker is down.  Restart the broker, and check for errors in the logs.'
+
+    - alert: ActiveController
+      expr: sum(kafka_controller_kafkacontroller_activecontrollercount{job="kafka-broker"}) != 1
+      for: 1m
+      labels:
+        severity: critical
+        cluster: "Payment Hub"
+      annotations:
+        summary: 'Kafka: No active controller'
+        description: 'No broker in the cluster is reporting as the active controller in the last 1 minute interval. During steady state there should be only one active controller per cluster.'
