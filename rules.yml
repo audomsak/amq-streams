@@ -86,7 +86,7 @@ groups:
       annotations:
         summary: 'Kafka: {{ $value }} broker(s) offline'
         description:
-          '{{ $value }} out of
+          '{{ with query "count(kafka_server_replicamanager_leadercount{job=`kafka-broker`})" }} out of
            {{ with query "count(up{job=`kafka-broker`})" }}
              {{ . | first | value }}
            {{ end }}
